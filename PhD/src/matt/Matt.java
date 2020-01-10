@@ -6,11 +6,9 @@
 
 package matt;
 
-import java.io.File;
-import javax.swing.UIManager;
-import abc.notation.Tune;
-import abc.parser.TuneBook;
 import java.io.IOException;
+
+import javax.swing.UIManager;
 
 /**
  *
@@ -19,46 +17,46 @@ import java.io.IOException;
 public class Matt {
     private String unOrnamentedTuneFile;
     private String ornamentedTuneFile;
-    private String learnedFile;    
+    private String learnedFile;
     private ODCFTranscriber transcriber;
     private MattGuiNB mattGui;
-    
+
     private static Matt _instance = null;
-    
+
     public static Matt instance()
     {
-        
+
         if (_instance == null)
         {
             _instance = new Matt();
         }
         return _instance;
     }
-    
-    public static final String PATH = "c:\\Users\\Bryan\\Documents\\Projects\\PhD\\"; 
-    
+
+    public static final String PATH = "c:\\Users\\Bryan\\Documents\\Projects\\PhD\\";
+
     /**
      * Creates a new instance of Matt
      */
     public Matt() {
-        
+
         transcriber = new ODCFTranscriber();
         mattGui = MattGuiNB.instance();
         mattGui.setTranscriber(transcriber);
     }
-    
-    public static void main(String[] args) throws Exception 
+
+    public static void main(String[] args) throws Exception
     {
-        
-        try 
+
+        try
         {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } 
-        catch(Exception e) 
+        }
+        catch(Exception e)
         {
             System.out.println("Error setting native LAF: " + e);
         }
-        
+
         Matt matt = Matt.instance();
         /*matt.setUnOrnamentedTuneFile(PATH + "abc\\EamonnCotterUn.abc");
         matt.setOrnamentedTuneFile(PATH + "abc\\EamonnCotter.abc");
@@ -76,42 +74,42 @@ public class Matt {
             matt.showGui();
         }
     }
-    
+
     public String getUnOrnamentedTuneFile() {
         return unOrnamentedTuneFile;
     }
-    
+
     public void setUnOrnamentedTuneFile(String unOrnamentedTuneFile) {
         this.unOrnamentedTuneFile = unOrnamentedTuneFile;
     }
-    
+
     public String getOrnamentedTuneFile() {
         return ornamentedTuneFile;
     }
-    
+
     public void setOrnamentedTuneFile(String ornamentedTuneFile) {
         this.ornamentedTuneFile = ornamentedTuneFile;
     }
-    
+
     public String getLearnedFile() {
         return learnedFile;
     }
-    
+
     public void setLearnedFile(String learnedFile) {
         this.learnedFile = learnedFile;
     }
-    
+
     public void showGui() throws IOException {
         mattGui.setMatt(this);
-        mattGui.setVisible(true);        
+        mattGui.setVisible(true);
         mattGui.setTranscriber(transcriber);
         transcriber.setGui(mattGui);
-        
+
         getTranscriber().setInputFile( PATH + "audio\\test\\D.wav");
-        
+
     }
-   
-    
+
+
 
     public ODCFTranscriber getTranscriber() {
         return transcriber;

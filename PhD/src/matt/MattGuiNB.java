@@ -6,17 +6,27 @@
 
 package matt;
 
-import abc.midi.*;
-import javax.sound.midi.*;
-import abc.parser.TuneBook;
-import java.awt.event.*;
-import javax.swing.*;
-import java.io.*;
-import java.awt.*;
-import javax.swing.table.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Vector;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
+import abc.midi.TunePlayer;
 import abc.notation.Tune;
-import javax.swing.plaf.ColorUIResource;
+import abc.notation.TuneBook;
+import abc.parser.TuneBookParser;
 
 
 /**
@@ -24,24 +34,24 @@ import javax.swing.plaf.ColorUIResource;
  * @author  Bryan
  */
 public class MattGuiNB extends javax.swing.JFrame implements GUI{
-    
+
     private ODCFTranscriber transcriber = null;
     private BatchJob batchJob = null;
     private Matt matt;
     private static MattGuiNB _instance;
-    
+
     private Graph frameGraph  = new Graph();
     private Graph fftGraph = new Graph();
     private Graph signalGraph  = new Graph();
     private Graph odfGraph = new Graph();
     private Vector tuneMatches = new Vector();
-    
-    private Vector<Graph> fftGraphs = new Vector(); 
+
+    private Vector<Graph> fftGraphs = new Vector();
     private TunePlayer tunePlayer = new TunePlayer();
     ABCFinder finder = null;
     ABCMatch best = null;
     AudioCapture audioCapture = new AudioCapture();
-    
+
     /** Creates new form MattGuiNB */
     private MattGuiNB() {
         initComponents();
@@ -49,14 +59,14 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         // Add the graphs...
         frameGraph.setBounds(10,10,380,120);
         fftGraph.setBounds(400,10,380,120);
-        signalGraph.setBounds(10,140, 770, 120);        
+        signalGraph.setBounds(10,140, 770, 120);
         odfGraph.setBounds(10,270, 770, 120);
-               
+
         getContentPane().add(frameGraph);
         getContentPane().add(fftGraph);
         getContentPane().add(signalGraph);
         getContentPane().add(odfGraph);
-        
+
         frameGraph.setBackground(Color.CYAN);
         signalGraph.setBackground(Color.GREEN);
         odfGraph.setBackground(Color.YELLOW);
@@ -65,7 +75,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         tunePlayer.start();
         MattProperties.instance();
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -117,21 +127,24 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         btnPlayOriginal.setText("Original");
         btnPlayOriginal.setName("btnPlayOriginal"); // NOI18N
         btnPlayOriginal.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPlayOriginalActionPerformed(evt);
             }
         });
 
         btnPlayTranscription.setText("Transcribed");
         btnPlayTranscription.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPlayTranscriptionActionPerformed(evt);
             }
         });
 
         btnChooseFile.setText("Choose File");
         btnChooseFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnChooseFileActionPerformed(evt);
             }
         });
@@ -140,7 +153,8 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
 
         btnClearLog.setText("Clear Log");
         btnClearLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearLogActionPerformed(evt);
             }
         });
@@ -154,21 +168,24 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
 
         btnTranscribe.setText("Transcribe");
         btnTranscribe.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnTranscribeActionPerformed(evt);
             }
         });
 
         btnFind.setText("Find");
         btnFind.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnFindActionPerformed(evt);
             }
         });
 
         btnPlayFound.setText("Found");
         btnPlayFound.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPlayFoundActionPerformed(evt);
             }
         });
@@ -176,7 +193,8 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         jLabel4.setText("Matches:");
 
         jScrollPane2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+            @Override
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jScrollPane2MouseClicked(evt);
             }
         });
@@ -193,12 +211,14 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
                 false, false, false
             };
 
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
+            @Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
         tblMatches.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+            @Override
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tblMatchesMouseClicked(evt);
             }
         });
@@ -207,14 +227,16 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         btnQuit.setText("Quit");
         btnQuit.setName("btnQuit"); // NOI18N
         btnQuit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnQuitActionPerformed(evt);
             }
         });
 
         btnAnalysed.setText("Analysed");
         btnAnalysed.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAnalysedActionPerformed(evt);
             }
         });
@@ -223,39 +245,45 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
 
         btnBest.setText("Best");
         btnBest.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnBestActionPerformed(evt);
             }
         });
 
         btnReindex.setText("Reindex");
         btnReindex.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnReindexActionPerformed(evt);
             }
         });
 
         btnBatch.setText("Batch");
         btnBatch.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnBatchActionPerformed(evt);
             }
         });
 
         btnLiveQuery.setText("Live Query");
         btnLiveQuery.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnLiveQueryActionPerformed(evt);
             }
         });
 
         cbSelectFFT.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+            @Override
+			public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cbSelectFFTItemStateChanged(evt);
             }
         });
         cbSelectFFT.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cbSelectFFTActionPerformed(evt);
             }
         });
@@ -264,7 +292,8 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
 
         btnAbout.setText("About");
         btnAbout.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAboutActionPerformed(evt);
             }
         });
@@ -390,10 +419,10 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
 
     private void btnPlayFoundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPlayFoundActionPerformed
          int row = tblMatches.getSelectedRow();
-         ABCMatch match = (ABCMatch) tuneMatches.elementAt(row);         
+         ABCMatch match = (ABCMatch) tuneMatches.elementAt(row);
          try
-         {  
-             
+         {
+
              if (! MIDITools.instance().isFinished())
              {
                  MIDITools.instance().setFinished(true);
@@ -440,7 +469,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     private void btnFindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFindActionPerformed
         if ((finder != null) && finder.isRunning())
         {
-            finder.setRunning(false);            
+            finder.setRunning(false);
         }
         else
         {
@@ -453,7 +482,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     }//GEN-LAST:event_btnFindActionPerformed
 
     private void btnTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTranscribeActionPerformed
-        transcriber.transcribea();        
+        transcriber.transcribea();
     }//GEN-LAST:event_btnTranscribeActionPerformed
 
     private void btnClearLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearLogActionPerformed
@@ -465,7 +494,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         JFileChooser fc = new JFileChooser();
         fc.setFileFilter(new WavFilter());
         System.out.println(transcriber.getInputFile());
-        
+
         fc.setSelectedFile(new File("" + MattProperties.instance().get("BatchPath")));
         int returnVal = fc.showOpenDialog(MattGuiNB.this);
         if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -486,12 +515,12 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
             tunePlayer.stopPlaying();
             return;
         }
-        
-        try 
+
+        try
         {
             FileWriter outFile = new FileWriter("temp.abc");
             PrintWriter out = new PrintWriter(outFile);
-            
+
             out.println("X:1");
             out.println("T:Temp");
             out.println("R:Reel");
@@ -501,14 +530,15 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
             out.println(getTxtABC().getText());
             out.close();
             File abcFile = new File ("temp.abc");
-            TuneBook book = new TuneBook(abcFile);
+            TuneBookParser parser = new TuneBookParser();
+            TuneBook book = parser.parse(abcFile);
             Tune aTune = book.getTune(1);
             tunePlayer.play(aTune);
-        } 
+        }
         catch (Exception e)
         {
             e.printStackTrace();
-        }       
+        }
     }//GEN-LAST:event_btnPlayTranscriptionActionPerformed
 
     private void btnQuitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnQuitActionPerformed
@@ -519,13 +549,14 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         if (transcriber.isIsPlaying())
         {
             transcriber.setIsPlaying(false);
-            
+
         }
         else
         {
             new Thread()
             {
-                public void run()
+                @Override
+				public void run()
                 {
                     transcriber.playTranscription();
                 }
@@ -534,7 +565,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     }//GEN-LAST:event_btnAnalysedActionPerformed
 
     private void btnBestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBestActionPerformed
-    
+
         if (best == null)
         {
             return;
@@ -564,9 +595,10 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         //CorpusIndex.instance().reindex();
         new Thread()
         {
-            public void run()
+            @Override
+			public void run()
             {
-            	CorpusIndex.instance().reindex();                
+            	CorpusIndex.instance().reindex();
             }
         }
         .start();
@@ -588,7 +620,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     }//GEN-LAST:event_btnBatchActionPerformed
 
     private void cbSelectFFTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbSelectFFTActionPerformed
-        
+
     }//GEN-LAST:event_cbSelectFFTActionPerformed
 
     private void cbSelectFFTItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbSelectFFTItemStateChanged
@@ -596,7 +628,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
        if (i == -1 || (fftGraphs.size() == 0))
        {
            return;
-       }       
+       }
          getContentPane().remove(fftGraph);
          if (i < fftGraphs.size())
          {
@@ -611,41 +643,42 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         if (btnLiveQuery.getText().equals("Live Query"))
         {
             btnLiveQuery.setText("Recording...");
-            audioCapture.start();            
+            audioCapture.start();
         }
         else
         {
             audioCapture.stop();
             btnLiveQuery.setText("Live Query");
-            try 
+            try
             {
                 Thread.sleep(1000);
             }
             catch (Exception e)
             {
-                
+
             }
             transcriber.setInputFile(audioCapture.getFileName());
             transcriber.loadAudio();
         }
-        
+
     }//GEN-LAST:event_btnLiveQueryActionPerformed
 
     private void btnAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAboutActionPerformed
         About.instance().setVisible(true);
     }//GEN-LAST:event_btnAboutActionPerformed
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
                 new MattGuiNB().setVisible(true);
             }
         });
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAbout;
     private javax.swing.JButton btnAnalysed;
@@ -676,15 +709,15 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     private javax.swing.JLabel txtBest;
     private javax.swing.JTextArea txtLog;
     // End of variables declaration//GEN-END:variables
-    
-    
-    
+
+
+
     public void addFFTGraph(Graph graph, String title)
     {
         DefaultComboBoxModel model = (DefaultComboBoxModel) cbSelectFFT.getModel();
         model.addElement("" + title);
         fftGraphs.add(graph);
-        cbSelectFFT.setSelectedIndex(model.getSize() -1);        
+        cbSelectFFT.setSelectedIndex(model.getSize() -1);
         getContentPane().remove(fftGraph);
         graph.setBounds(400,10,380,120);
         /*
@@ -697,30 +730,33 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         graph.setBackground(Color.WHITE);
         fftGraph = graph;
         getContentPane().add(graph);
-        graph.repaint();       
+        graph.repaint();
     }
-    
-    public void clearFFTGraphs()
+
+    @Override
+	public void clearFFTGraphs()
     {
         DefaultComboBoxModel model = (DefaultComboBoxModel) cbSelectFFT.getModel();
         model.removeAllElements();
         fftGraphs.removeAllElements();
         fftGraph.getDefaultSeries().clear();
     }
-    
-    public void enableButtons(boolean enabled)
+
+    @Override
+	public void enableButtons(boolean enabled)
     {
         /*
          btnPlayTranscription.setEnabled(enabled);
         btnChooseFile.setEnabled(enabled);
         btnPlayOriginal.setEnabled(enabled);
-        btnTranscribe.setEnabled(enabled);                
+        btnTranscribe.setEnabled(enabled);
         btnPlayFound.setEnabled(enabled);
         btnFind.setEnabled(enabled);
-         */ 
+         */
     }
-    
-    public void clearGraphs()
+
+    @Override
+	public void clearGraphs()
     {
         frameGraph.clear();
         signalGraph.clear();
@@ -735,8 +771,8 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         txtLog.setText("");
         txtBest.setText("");
     }
-    
-    public static void center(JFrame frame, int w, int h) 
+
+    public static void center(JFrame frame, int w, int h)
     {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Point center = ge.getCenterPoint();
@@ -747,7 +783,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
             frame.setExtendedState(Frame.MAXIMIZED_BOTH);
         frame.validate();
     }
-    
+
     public ODCFTranscriber getTranscriber() {
         return transcriber;
     }
@@ -755,9 +791,9 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     public void setTranscriber(ODCFTranscriber transcriber) {
         this.transcriber = transcriber;
     }
-    
-    // Variables declaration - do not modify                     
-    // End of variables declaration                   
+
+    // Variables declaration - do not modify
+    // End of variables declaration
 
     public Matt getMatt() {
         return matt;
@@ -767,25 +803,28 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         this.matt = matt;
     }
 
-    public Graph getFrameGraph() {
+    @Override
+	public Graph getFrameGraph() {
         return frameGraph;
     }
 
 
-    public Graph getSignalGraph() {
+    @Override
+	public Graph getSignalGraph() {
         return signalGraph;
     }
 
-    public Graph getOdfGraph() {
+    @Override
+	public Graph getOdfGraph() {
         return odfGraph;
     }
-    
+
     public static void log(Object s)
     {
         instance().getTxtLog().append(s + System.getProperty("line.separator"));
         instance().getTxtLog().setCaretPosition(_instance.txtLog.getText().length());
     }
-    
+
     public static MattGuiNB instance()
     {
         if (_instance == null)
@@ -795,7 +834,7 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         }
         return _instance;
     }
-    
+
     public void addMatch(ABCMatch match)
     {
         DefaultTableModel model = (DefaultTableModel) tblMatches.getModel();
@@ -806,17 +845,18 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         model.addRow(row);
         tuneMatches.add(match);
     }
-    
+
     public void clearMatches()
     {
         DefaultTableModel model = (DefaultTableModel) tblMatches.getModel();
-        
+
         model.setRowCount(0);
         tuneMatches.clear();
     }
-    
 
-    public javax.swing.JTextArea getTxtABC()
+
+    @Override
+	public javax.swing.JTextArea getTxtABC()
     {
         return txtABC;
     }
@@ -825,14 +865,15 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
     {
         this.txtABC = txtABC;
     }
-    
+
     public synchronized void setBestSoFar(ABCMatch match)
     {
         best = match;
         txtBest.setText("Title: " + match.getTitle() + " ED:" + match.getEditDistance());
     }
 
-    public javax.swing.JProgressBar getProgressBar()
+    @Override
+	public javax.swing.JProgressBar getProgressBar()
     {
         return progressBar;
     }
@@ -872,7 +913,8 @@ public class MattGuiNB extends javax.swing.JFrame implements GUI{
         this.fftGraphs = fftGraphs;
     }
 
-    public void setBns() {
+    @Override
+	public void setBns() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

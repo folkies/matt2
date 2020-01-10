@@ -6,24 +6,43 @@
 
 package matt.web;
 
-import abc.parser.TuneBook;
-import java.awt.event.*;
-import javax.swing.*;
-import abc.notation.Tune;
-import abc.midi.*;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.WindowEvent;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.TargetDataLine;
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
-import java.io.*;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.TimerTask;
-import java.util.Timer;
-import javax.sound.sampled.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import matt.*;
+import javax.swing.UnsupportedLookAndFeelException;
+
+import abc.midi.PlayerStateChangeEvent;
+import abc.midi.TunePlayer;
+import abc.midi.TunePlayerAdapter;
+import abc.notation.Tune;
+import abc.parser.AbcTuneBook;
+import matt.Graph;
+import matt.Logger;
+import matt.MattABCTools;
+import matt.MattProperties;
+import matt.ODCFTranscriber;
+import matt.STFTTranscriber;
+import matt.Series;
 
 
 /**
@@ -39,17 +58,17 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
     Playback playback = new Playback();
     AudioInputStream audioInputStream;
     String errStr;
-    AudioFormat format = null;  
+    AudioFormat format = null;
     final int bufSize = 16384;
     double duration, seconds;
     ODCFTranscriber transcriber = new ODCFTranscriber();
-	
+
     float[] signal;
-    
+
     private TunePlayer tunePlayer = new TunePlayer();
-    
+
     private int sampleRate;
-    private int numSamples;    
+    private int numSamples;
     byte[] audioData;
 
     public MattApplet()
@@ -72,7 +91,7 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         txtStatus.setSize(d);
         txtStatus.setPreferredSize(d);
         */
-       
+
         getContentPane().add(signalGraph);
         //setBounds(0, 0, 630, 300);
         signalGraph.setBackground(new Color(176,210,13));
@@ -86,10 +105,11 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         MattProperties.instance(false).setProperty("tansey", "false");
         MattProperties.instance(false).setProperty("applet", "true");
         _instance = this;
-        
+
         tunePlayer.addListener(new TunePlayerAdapter()
         {
-            public void playEnd(PlayerStateChangeEvent e)
+            @Override
+			public void playEnd(PlayerStateChangeEvent e)
             {
                // playABCbtn.setText("Play ABC");
             }
@@ -100,14 +120,16 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
 
 
     /** Initializes the applet MattApplet */
-    public void init() {
+    @Override
+	public void init() {
         MattProperties.instance(true);
         setBackground(new Color(249,249,249));
         signalGraph = new Graph();
         tunePlayer.start();
         try {
             java.awt.EventQueue.invokeAndWait(new Runnable() {
-                public void run() {
+                @Override
+				public void run() {
                     try {
                         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                             if ("Nimbus".equals(info.getName())) {
@@ -136,7 +158,7 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
     }
 
     public void windowClosing(WindowEvent e) {
-        
+
     }
 
     /** This method is called from within the init() method to
@@ -174,7 +196,8 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         btnFind.setMinimumSize(new java.awt.Dimension(73, 18));
         btnFind.setPreferredSize(new java.awt.Dimension(78, 20));
         btnFind.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnFindActionPerformed(evt);
             }
         });
@@ -187,14 +210,16 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         btnPlay.setText("Playback");
         btnPlay.setEnabled(false);
         btnPlay.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPlayActionPerformed(evt);
             }
         });
 
         btnRecord.setText("Record");
         btnRecord.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRecordActionPerformed(evt);
             }
         });
@@ -209,12 +234,14 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         cmbFundamental.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Bb", "C", "D", "Eb", "F", "G" }));
         cmbFundamental.setName("cmbFundamental"); // NOI18N
         cmbFundamental.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+            @Override
+			public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cmbFundamentalItemStateChanged(evt);
             }
         });
         cmbFundamental.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbFundamentalActionPerformed(evt);
             }
         });
@@ -222,7 +249,8 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         btnTranscribe.setText("Transcribe");
         btnTranscribe.setEnabled(false);
         btnTranscribe.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnTranscribeActionPerformed(evt);
             }
         });
@@ -234,14 +262,16 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
 
         TuneBookBtn.setText("Tune Books: ...");
         TuneBookBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+            @Override
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
                 TuneBookBtnMouseClicked(evt);
             }
         });
 
         playABCbtn.setText("Play ABC");
         playABCbtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playABCbtnActionPerformed(evt);
             }
         });
@@ -329,7 +359,8 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         btnFind1.setMinimumSize(new java.awt.Dimension(73, 18));
         btnFind1.setPreferredSize(new java.awt.Dimension(78, 20));
         btnFind1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnFind1ActionPerformed(evt);
             }
         });
@@ -361,12 +392,14 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
         cmbTranscriber.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Method 1", "Method 2" }));
         cmbTranscriber.setOpaque(false);
         cmbTranscriber.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+            @Override
+			public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cmbTranscriberItemStateChanged(evt);
             }
         });
         cmbTranscriber.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            @Override
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTranscriberActionPerformed(evt);
             }
         });
@@ -402,7 +435,7 @@ public class MattApplet extends javax.swing.JApplet implements matt.GUI {
                 .addContainerGap(141, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-	
+
 private void btnFindActionPerformed(ActionEvent evt)//GEN-FIRST:event_btnFindActionPerformed
 	{//GEN-HEADEREND:event_btnFindActionPerformed
     /*
@@ -429,7 +462,7 @@ private void btnFindActionPerformed(ActionEvent evt)//GEN-FIRST:event_btnFindAct
     //System.out.println(theCorpusList.getVals());
 //    url += "&type=" + cmbType.getSelectedItem();
     //url += "&type=" + theTypeList.getVals();
-    url += "&silence=" + (int) slSilence.getValue();
+    url += "&silence=" + slSilence.getValue();
     url += "&method=" + cmbTranscriber.getSelectedItem();
     System.out.println("URL: " + url);
     try
@@ -446,7 +479,8 @@ private void btnFindActionPerformed(ActionEvent evt)//GEN-FIRST:event_btnFindAct
 class RemindTask extends TimerTask {
     int secleft = 15;
     int countup = 1;
-    public void run() {
+    @Override
+	public void run() {
           if (secleft > 12) {
             txtStatus.setText("Recording in " + (secleft-12) + "...");
             btnRecord.setText("Stop");
@@ -508,7 +542,7 @@ public String typeString = "";
 
 private void btnRecordActionPerformed(ActionEvent evt) {
     //theCorpusList.setVisible(true);
-    
+
     //Timer recTimer = new Timer();
     if (btnRecord.getText().equals("Record"))
     {
@@ -560,7 +594,7 @@ private void record() {
         // lines.removeAllElements();
         capture.stop();
         btnRecord.setText("Record");
-		
+
         try
         {
             synchronized(capture)
@@ -568,11 +602,11 @@ private void record() {
                 capture.wait();
             }
             AudioFormat format = audioInputStream.getFormat();
-        
+
             numSamples = (int) audioInputStream.getFrameLength();
-            audioData = new byte[(int) numSamples * 2];
+            audioData = new byte[numSamples * 2];
             signal = new float[numSamples];
-            audioInputStream.read(audioData, 0, (int) numSamples * 2);
+            audioInputStream.read(audioData, 0, numSamples * 2);
 
             sampleRate = (int) format.getSampleRate();
             transcriber.setSampleRate(sampleRate);
@@ -582,15 +616,15 @@ private void record() {
             getProgressBar().setMaximum(numSamples);
             for (int signalIndex = 0; signalIndex < numSamples; signalIndex++)
             {
-                signal[signalIndex] = ((audioData[(signalIndex * 2) + 1] << 8) + audioData[signalIndex * 2]);                                             
+                signal[signalIndex] = ((audioData[(signalIndex * 2) + 1] << 8) + audioData[signalIndex * 2]);
                 getProgressBar().setValue(signalIndex);
                 //System.out.println(signal[signalIndex]);
             }
-            
+
             Logger.log("Removing silence at the start...");
             transcriber.setSignal(signal);
             transcriber.setSilenceThreshold(slSilence.getValue());
-            transcriber.removeSilence();           
+            transcriber.removeSilence();
             signal = transcriber.getSignal();
             Logger.log("Graphing...");
             if (Boolean.parseBoolean("" + MattProperties.getString("drawSignalGraphs")) == true)
@@ -613,7 +647,7 @@ private void record() {
             getProgressBar().setValue(0);
         }
     }
-}                                         
+}
 
 private void btnPlayActionPerformed(ActionEvent evt) {//GEN-FIRST:event_btnPlayActionPerformed
     if (btnPlay.getText().equals("Playback"))
@@ -628,7 +662,7 @@ private void btnPlayActionPerformed(ActionEvent evt) {//GEN-FIRST:event_btnPlayA
     }
 }//GEN-LAST:event_btnPlayActionPerformed
 
-private void btnTranscribeActionPerformed(ActionEvent evt) {                                              
+private void btnTranscribeActionPerformed(ActionEvent evt) {
         try
         {
 
@@ -669,7 +703,7 @@ private void cmbTranscriberItemStateChanged(java.awt.event.ItemEvent evt)//GEN-F
     else
     {
         transcriber = new STFTTranscriber();
-        
+
     }
     transcriber.setGui(this);
     transcriber.setSampleRate(sampleRate);
@@ -688,7 +722,7 @@ private void btnFind1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     toFind = MattABCTools.stripBarDivisions(toFind);
     toFind = toFind.toUpperCase();
 
-    
+
     String docBase = "" + getDocumentBase();
     int li = docBase.lastIndexOf("/");
     String url = docBase.substring(0, li) + "/search8.jsp?version=1.4&q=" + URLEncoder.encode(toFind);
@@ -708,8 +742,8 @@ private void btnFind1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 //         url += "&corpus[]=";
 //         url += corpSrchList.get(i);
 //    }
-    
-    url += "&silence=" + (int) slSilence.getValue();
+
+    url += "&silence=" + slSilence.getValue();
     url += "&method=" + cmbTranscriber.getSelectedItem();
     System.out.println("URL: " + url);
     try {
@@ -742,7 +776,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             tuneText.append("L:1/8\r\n");
             tuneText.append("K:D\r\n");
             tuneText.append(getTxtABC().getText());
-            TuneBook book = new TuneBook();
+            AbcTuneBook book = new AbcTuneBook();
             book.putTune(tuneText.toString());
             Tune aTune = book.getTune(1);
             tunePlayer.play(aTune);
@@ -778,7 +812,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     // End of variables declaration//GEN-END:variables
     private Graph signalGraph;
 
-   
+
     public class Playback implements Runnable {
 
         SourceDataLine line;
@@ -793,7 +827,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         public void stop() {
             thread = null;
         }
-        
+
         private void shutDown(String message) {
             if ((errStr = message) != null) {
                 System.err.println(errStr);
@@ -807,10 +841,11 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                 playB.setText("Play");
                  */
                 btnPlay.setText("Playback");
-            } 
+            }
         }
 
-        public void run() {
+        @Override
+		public void run() {
 
             // make sure we have something to play
             if (audioInputStream == null) {
@@ -824,21 +859,21 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             } catch (Exception e) {
                 e.printStackTrace();
                 shutDown("Unable to reset the stream\n" + e);
-                
+
                 return;
             }
 
             AudioInputStream playbackInputStream = AudioSystem.getAudioInputStream(format, audioInputStream);
-                        
+
             if (playbackInputStream == null) {
                 shutDown("Unable to convert stream of format " + audioInputStream + " to format " + format);
                 return;
             }
 
-            // define the required attributes for our line, 
+            // define the required attributes for our line,
             // and make sure a compatible line is supported.
 
-            DataLine.Info info = new DataLine.Info(SourceDataLine.class, 
+            DataLine.Info info = new DataLine.Info(SourceDataLine.class,
                 format);
             if (!AudioSystem.isLineSupported(info)) {
                 shutDown("Line matching " + info + " not supported.");
@@ -850,7 +885,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             try {
                 line = (SourceDataLine) AudioSystem.getLine(info);
                 line.open(format, bufSize);
-            } catch (LineUnavailableException ex) { 
+            } catch (LineUnavailableException ex) {
                 shutDown("Unable to open the line: " + ex);
                 return;
             }
@@ -891,9 +926,9 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             shutDown(null);
         }
     } // End class Playback
-        
 
-    /** 
+
+    /**
      * Reads data from the input channel and writes to the output stream
      */
     class Capture implements Runnable {
@@ -911,7 +946,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         public void stop() {
             thread = null;
         }
-        
+
         private void shutDown(String message) {
             System.out.println(message);
             if ((errStr = message) != null && thread != null) {
@@ -919,17 +954,18 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             }
         }
 
-        
-        public void run() {
+
+        @Override
+		public void run() {
 
             duration = 0;
             audioInputStream = null;
             System.out.println("0");
 
-            // define the required attributes for our line, 
+            // define the required attributes for our line,
             // and make sure a compatible line is supported.
-         
-            DataLine.Info info = new DataLine.Info(TargetDataLine.class, 
+
+            DataLine.Info info = new DataLine.Info(TargetDataLine.class,
                 format);
             System.out.println("1");
             if (!AudioSystem.isLineSupported(info)) {
@@ -941,18 +977,18 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             try {
                 line = (TargetDataLine) AudioSystem.getLine(info);
                 line.open(format, line.getBufferSize());
-            } catch (LineUnavailableException ex) { 
+            } catch (LineUnavailableException ex) {
                 shutDown("Unable to open the line: " + ex);
                 return;
-            } catch (SecurityException ex) { 
+            } catch (SecurityException ex) {
                 shutDown(ex.toString());
                 // showInfoDialog();
                 return;
-            } catch (Exception ex) { 
+            } catch (Exception ex) {
                 shutDown(ex.toString());
                 return;
             }
-            
+
             System.out.println("3");
             // play back the captured audio data
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -961,7 +997,7 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             int bufferLengthInBytes = bufferLengthInFrames * frameSizeInBytes;
             byte[] data = new byte[bufferLengthInBytes];
             int numBytesRead;
-            
+
             line.start();
             System.out.println("4");
             while (thread != null) {
@@ -995,8 +1031,8 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
             try {
                 audioInputStream.reset();
-            } catch (Exception ex) { 
-                ex.printStackTrace(); 
+            } catch (Exception ex) {
+                ex.printStackTrace();
                 return;
             }
             synchronized(this)
@@ -1007,32 +1043,38 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         }
     } // End class Capture
 
-    public void clearGraphs()
+    @Override
+	public void clearGraphs()
     {
         signalGraph.clear();
     }
 
-    public Graph getSignalGraph()
+    @Override
+	public Graph getSignalGraph()
     {
         return signalGraph;
     }
 
-    public Graph getOdfGraph()
+    @Override
+	public Graph getOdfGraph()
     {
         return null;
     }
 
-    public JProgressBar getProgressBar()
+    @Override
+	public JProgressBar getProgressBar()
     {
         return progressBar;
     }
 
-    public void setTitle(String t)
+    @Override
+	public void setTitle(String t)
     {
-        
+
     }
 
-    public void enableButtons(boolean b)
+    @Override
+	public void enableButtons(boolean b)
     {
         btnRecord.setEnabled(b);
         playABCbtn.setEnabled(b);
@@ -1047,27 +1089,31 @@ private void playABCbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         cmbTranscriber.setEnabled(b);
     }
 
-    public void clearFFTGraphs()
+    @Override
+	public void clearFFTGraphs()
     {
-        
+
     }
 
-    public Graph getFrameGraph()
+    @Override
+	public Graph getFrameGraph()
     {
         return null;
     }
 
-    public JTextArea getTxtABC()
+    @Override
+	public JTextArea getTxtABC()
     {
         return txtABC;
     }
-    
+
     public static void setStatus(String msg)
     {
         _instance.txtStatus.setText(msg);
     }
 
-    public void setBns() {
+    @Override
+	public void setBns() {
         if (theCorpusList.getWhat().length() > 15)
             TuneBookBtn.setText("Tune Books: " + theCorpusList.getWhat().substring(0, 5) + "..." + theCorpusList.getWhat().substring((theCorpusList.getWhat().length() - 5)));
         else

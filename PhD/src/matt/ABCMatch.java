@@ -9,10 +9,12 @@
  */
 
 package matt;
+import java.io.File;
+import java.util.Comparator;
+
 import abc.notation.Tune;
-import abc.parser.TuneBook;
-import java.util.*;
-import java.io.*;
+import abc.notation.TuneBook;
+import abc.parser.TuneBookParser;
 /**
  *
  * @author Bryan
@@ -32,13 +34,13 @@ public class ABCMatch implements Comparator {
     private int index;
     private int which = -1;
     private int repititions = -1;
-    
+
     private Tune tune;
-    
+
     /** Creates a new instance of ABCMatch */
     public ABCMatch() {
-        
-    }    
+
+    }
 
     public String getFileName() {
         return fileName;
@@ -57,16 +59,17 @@ public class ABCMatch implements Comparator {
                 String curDir = System.getProperty("user.dir");
                 String fName = curDir + System.getProperty("file.separator") + MattProperties.instance().get("SearchCorpus") + System.getProperty("file.separator") + getSource() +  System.getProperty("file.separator") + getFileName();
                 File f = new File(fName);
-                TuneBook book = new TuneBook(f);
+                TuneBookParser parser = new TuneBookParser();
+                TuneBook book = parser.parse(f);
                 setTune(book.getTune(x));
-                setNotation(book.getTuneNotation(x));
+                setNotation(book.getTune(x).getNotes());
             }
             catch (Exception e)
             {
-                Logger.log("Lazy loading failed");            
-                e.printStackTrace();                
+                Logger.log("Lazy loading failed");
+                e.printStackTrace();
             }
-            
+
         }
         return tune;
     }
@@ -103,14 +106,15 @@ public class ABCMatch implements Comparator {
     {
         this.editDistance = editDistance;
     }
-    
+
     // To implement the Comparitor interface
 
-    public int compare(Object o0, Object  o1)
+    @Override
+	public int compare(Object o0, Object  o1)
     {
         ABCMatch match0 = (ABCMatch) o0;
         ABCMatch match1 = (ABCMatch) o1;
-        
+
         if (match0.getRepititions() == -1)
         {
             if (match0.getEditDistance() < match1.getEditDistance())
@@ -136,8 +140,9 @@ public class ABCMatch implements Comparator {
             return 1;
         }
     }
-    
-    public String toString()
+
+    @Override
+	public String toString()
     {
         String ret = "Title: " + getTitle() + " File: " + getFileName() + " ED: " + getEditDistance();
         if (which != -1)
